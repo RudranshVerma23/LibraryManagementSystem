@@ -1,4 +1,4 @@
-# Library Management System (Approach B - Reservations)
+# Library Management System
 
 This repository contains a **Library Management System** implemented in C++ using Object-Oriented Programming (OOP) principles. It demonstrates a simplified approach to **borrowing, returning, and reserving books** in a library, with user roles for **Students**, **Faculty**, and a **Librarian**.
 
@@ -46,7 +46,7 @@ This repository contains a **Library Management System** implemented in C++ usin
    - **Manage** library’s books and users (add, remove, update)
 
 4. The code automatically logs **transactions** (borrow/return/reserve) by appending lines to `transactions.txt`.
-5. When **returning** a reserved book, the system uses “**Approach B**,” meaning:
+5. When **returning** a reserved book:
    - The returned book is marked **Available** in real-time,  
    - If reserved by someone else, it **immediately** gets auto-borrowed by that reserved user and a **second** “borrow” transaction is logged for them.  
    - In `loadTransactions()`, the `return` lines simply set the book to **Available** again (i.e., do not auto-borrow for the reserved user). Instead, the separate `borrow` transaction line for the reserved user ensures consistent replay of the library state.
@@ -77,13 +77,8 @@ This repository contains a **Library Management System** implemented in C++ usin
 
 ## Credits
 
-- **Author & Code**: *[Your Name]*  
-- **Acknowledgments**: Provided by *[Your Name or Instructor]*  
+- **Author & Code**: [**Rudransh Verma**](https://github.com/RudranshVerma23)
 
 ## Contributing
 
 Feel free to open an issue or pull request if you would like to improve or extend the project.
-
-## License
-
-*(If you wish to add a license, e.g., MIT License or a custom one, include it here. Otherwise, omit this section.)*
