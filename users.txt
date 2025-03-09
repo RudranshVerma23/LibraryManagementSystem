@@ -1,0 +1,9 @@
+s01,pwd1,Student One,Student,0
+s02,pwd2,Student Two,Student,0
+s03,pwd3,Student Three,Student,0
+s04,pwd4,Student Four,Student,0
+s05,pwd5,Student Five,Student,0
+f01,pwd1,Faculty One,Faculty,0
+f02,pwd2,Faculty Two,Faculty,0
+f02,pwd3,Faculty Three,Faculty,0
+lib1,admin1,Librarian One,Librarian,0
