@@ -1,11 +1,5 @@
 /**************************************************
  * main.cpp
- * Demonstration of Approach B for reservations:
- *   - "return" lines in loadTransactions() only
- *     set the book to Available (do not auto-borrow).
- *   - The real-time returnBook() method, if the
- *     book is reserved, sets the new user as Borrowed
- *     and appends a new "borrow" transaction.
  **************************************************/
 #include <iostream>
 #include <fstream>
@@ -17,9 +11,6 @@
 #include <algorithm>
 #include <unordered_map>
 
-// --------------------------------------------------
-// Helper for "days since epoch"
-// --------------------------------------------------
 long long currentDaysSinceEpoch() {
     using namespace std::chrono;
     system_clock::time_point tp = system_clock::now();
@@ -33,7 +24,7 @@ long long daysDifferenceFromNow(long long dayStamp) {
 }
 
 // --------------------------------------------------
-// BookStatus enum
+// enum for simpler and clearer approach for assigning status
 // --------------------------------------------------
 enum class BookStatus {
     AVAILABLE,
@@ -49,18 +40,15 @@ BookStatus stringToBookStatus(const std::string &s) {
     return (s == "Borrowed") ? BookStatus::BORROWED : BookStatus::AVAILABLE;
 }
 
-// --------------------------------------------------
-class Account;
+class Account; // defined later
 
-// --------------------------------------------------
-// User base class
-// --------------------------------------------------
+// User class, which is inherited by Student, Faculty and Librarian child classes
 class User {
 protected:
     std::string userID;
     std::string password;
     std::string name;
-    std::string role;  // "Student", "Faculty", "Librarian"
+    std::string role;  // "Student", "Faculty" or "Librarian"
     double fine;
 public:
     Account* account;
@@ -101,9 +89,6 @@ public:
     }
 };
 
-// --------------------------------------------------
-// BorrowInfo
-// --------------------------------------------------
 struct BorrowInfo {
     std::string ISBN;
     long long borrowDay;
@@ -162,9 +147,6 @@ public:
     int getReservations() const { return reservations; }
 };
 
-// --------------------------------------------------
-// Student
-// --------------------------------------------------
 class Student : public User {
 public:
     Student(const std::string &u, const std::string &p,
@@ -185,9 +167,6 @@ public:
     }
 };
 
-// --------------------------------------------------
-// Faculty
-// --------------------------------------------------
 class Faculty : public User {
 public:
     Faculty(const std::string &u, const std::string &p,
@@ -211,9 +190,6 @@ public:
     bool hasFines() const override { return false; }
 };
 
-// --------------------------------------------------
-// Librarian
-// --------------------------------------------------
 class Librarian : public User {
 public:
     Librarian(const std::string &u, const std::string &p,
@@ -232,9 +208,7 @@ public:
     }
 };
 
-// --------------------------------------------------
-// Book class
-// --------------------------------------------------
+
 class Book {
 private:
     std::string ISBN;
@@ -271,9 +245,7 @@ public:
     void setYear(int y)                     { year = y; }
 };
 
-// --------------------------------------------------
-// Library
-// --------------------------------------------------
+
 class Library {
 private:
     std::vector<Book> books;
@@ -289,9 +261,7 @@ public:
         }
     }
 
-    // --------------------------------------------------
-    // Loading data
-    // --------------------------------------------------
+    
     void loadBooks(const std::string &filename) {
         std::ifstream fin(filename);
         if(!fin.is_open()) {
@@ -314,7 +284,7 @@ public:
             int y = std::stoi(ystr);
             BookStatus bst = stringToBookStatus(st);
             Book bk(i, t, a, pub, y, bst);
-            bk.setReservedBy(""); // not storing reserved user in file
+            bk.setReservedBy(""); // not storing reserved user in file (can be known while reading through the transactions
             books.push_back(bk);
         }
         fin.close();
@@ -357,9 +327,7 @@ public:
         fin.close();
     }
 
-    // --------------------------------------------------
-    // Approach B: "return" lines do not do auto-handover
-    // --------------------------------------------------
+    
     void loadTransactions(const std::string &filename) {
         std::ifstream fin(filename);
         if(!fin.is_open()) {
@@ -389,14 +357,10 @@ public:
                 u->account->addBorrowed(isbn);
             }
             else if(op == "return") {
-                // Approach B: we do *not* do the "reservedUser auto-borrow" here.
-                // Just remove from user, set Available. 
                 u->account->returnBorrowed(isbn);
                 b->setStatus(BookStatus::AVAILABLE);
             }
             else if(op == "reserve") {
-                // Mark reserved only if the book is currently borrowed
-                // and it isn't already reserved.
                 if(b->getStatus() == BookStatus::BORROWED &&
                    b->getReservedBy().empty())
                 {
@@ -407,9 +371,7 @@ public:
         fin.close();
     }
 
-    // --------------------------------------------------
-    // Utility
-    // --------------------------------------------------
+    
     User* findUser(const std::string &uid) {
         for(auto *u : users) {
             if(u->getUserID() == uid) return u;
@@ -437,9 +399,7 @@ public:
         fout.close();
     }
 
-    // --------------------------------------------------
-    // Borrow logic (real-time)
-    // --------------------------------------------------
+    
     bool hasOverdueMoreThan60Days(User &faculty) {
         auto &borrows = faculty.account->getCurrentBorrows();
         int maxDays = faculty.getMaxBorrowDays(); // 30 for Faculty
@@ -468,7 +428,7 @@ public:
             std::cout << "You have unpaid fines; pay first.\n";
             return;
         }
-        // Check limit
+        // Check limit: borrowed+reserved should be less than max allowed
         if(user.account->borrowedCount() + user.account->getReservations() >= user.getMaxBooksAllowed()) {
             std::cout << "You reached max books allowed.\n";
             return;
@@ -515,9 +475,7 @@ public:
         std::cout << "Book borrowed successfully.\n";
     }
 
-    // --------------------------------------------------
-    // Return logic (real-time)
-    // --------------------------------------------------
+    
     void returnBook(User &user, const std::string &isbn) {
         if(user.getRole() == "Librarian") {
             std::cout << "Librarian doesn't borrow books.\n";
@@ -589,9 +547,6 @@ public:
         std::cout << "Book returned successfully.\n";
     }
 
-    // --------------------------------------------------
-    // Librarian: add/remove books, users, etc.
-    // --------------------------------------------------
     void addBook() {
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
         std::string i,t,a,p;
@@ -666,7 +621,6 @@ public:
         std::cout << "Book updated.\n";
     }
 
-    // Librarian add/remove users
     void addUser() {
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
         std::string uid, pwd, nm, rl;
@@ -720,9 +674,6 @@ public:
         std::cout << "No such user.\n";
     }
 
-    // --------------------------------------------------
-    // Show data
-    // --------------------------------------------------
     void showAllBooks() {
         std::cout << "\n----- All Books -----\n";
         for(const auto &b : books) {
@@ -775,9 +726,7 @@ public:
         }
     }
 
-    // --------------------------------------------------
     // Save data
-    // --------------------------------------------------
     void saveBooks(const std::string &filename) {
         std::ofstream fout(filename);
         if(!fout.is_open()) {
@@ -812,9 +761,7 @@ public:
     }
 };
 
-// --------------------------------------------------
-// Main
-// --------------------------------------------------
+
 int main() {
     Library lib;
     // Load all data once at program start
@@ -851,7 +798,7 @@ int main() {
             User* currentUser = lib.findUser(uid);
             if(!currentUser || currentUser->getPassword() != pwd) {
                 std::cout << "Invalid credentials.\n";
-                // Return to top-level menu
+                // Return to main menu
                 continue;
             }
 
@@ -877,7 +824,7 @@ int main() {
                         lib.saveBooks("books.txt");
                         lib.saveUsers("users.txt");
                         std::cout << "Library data saved. Logging out...\n";
-                        break;  // exit this user session, go back to top-level
+                        break;  // exit this user session, go back to main
                     }
                     else if(ch == 1) {
                         lib.showAllBooks();
@@ -935,7 +882,7 @@ int main() {
                         lib.saveBooks("books.txt");
                         lib.saveUsers("users.txt");
                         std::cout << "Library data saved. Logging out...\n";
-                        break;  // return to top-level
+                        break;  // return to main
                     }
                     else if(ch == 1) {
                         lib.showAllBooks();
@@ -968,7 +915,7 @@ int main() {
                     } else if(ch == 4) {
                         lib.showUserAccount();
                     } else if(ch == 5) {
-                        // sub-menu for library mgmt
+                        // sub-menu for library management
                         while(true) {
                             std::cout << "\n-- Manage Library --\n"
                                       << "a) Add Book\n"
@@ -1006,7 +953,7 @@ int main() {
         else {
             std::cout << "Invalid choice.\n";
         }
-    } // end top-level while(true)
+    } // end main while(true)
 
     return 0;
 }
